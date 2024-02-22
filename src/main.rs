@@ -18,6 +18,7 @@ if args.len() != 4 {
     print_help();
     eprintln!("{} wrong number of arguments give, Expect 4, got {}", "Error".red().bold(), args.len());
     std::process::exit(1);
+    
 
 }
 
