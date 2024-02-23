@@ -1,7 +1,6 @@
 use std::{env, fs};
-use text_colorizer::Colorize;
-use regex::Regex;
 
+use text_colorizer::Colorize;
 #[derive(Debug)]
 #[allow(dead_code)]
 struct Arguments {
@@ -19,11 +18,6 @@ fn print_help() {
     eprintln!("Usage: <target string> <replacment string> <INPUT FILE> <OUTPUT FILE>");
 }
 
-fn replace(target:&str, rep: &str, data: &str) -> Result<String, regex::Error> {
-    let regex = Regex::new(target)?;
-    Ok(regex.replace_all(data, rep).to_string())
-}
-
 fn read_and_write(args: &Arguments) {
     let data = match fs::read_to_string(&args.input_file) {
         Ok(f) => f,
@@ -33,15 +27,7 @@ fn read_and_write(args: &Arguments) {
         },
     };
 
-    let replace_data = match replace(&args.pattern, &args.replace, &data){
-        Ok(d) => d,
-        Err(e) => {
-            eprintln!("{} failed replace text {:?}", "Error".red().bold(), e);
-            std::process::exit(1);
-        },
-    };
-
-    match fs::write(&args.output_file, &replace_data) {
+    match fs::write(&args.output_file, &data) {
         Ok(f2) => {},
         Err(e) => {
             eprintln!("{} failed to write to file {}: {:?}", "Error".red().bold(), &args.output_file, e);
@@ -78,3 +64,34 @@ pub fn run() {
     //println!("{:?}", args);
     read_and_write(&args);
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_read_and_write() {
+        // Create a temporary file for testing
+        let input_file = "test_input.txt";
+        let output_file = "test_output.txt";
+        std::fs::write(input_file, "Hello, World!").unwrap();
+        
+        let args = Arguments {
+            pattern: "Hello".to_string(),
+            replace: "Hi".to_string(),
+            input_file: input_file.to_string(),
+            output_file: output_file.to_string(),
+        };
+
+        read_and_write(&args);
+
+        let output_data = std::fs::read_to_string(output_file).unwrap();
+        assert_eq!(output_data, "Hello, World!");
+
+        // Clean up temporary files
+        std::fs::remove_file(input_file).unwrap();
+        std::fs::remove_file(output_file).unwrap();
+    }
+}
+
